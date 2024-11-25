@@ -11,26 +11,21 @@ def run(playwright: Playwright):
     # Wait for the table rows to load
     page.wait_for_selector("tr[data-object-type='rfp']")
 
-    # Locate all rows with 'data-object-type="rfp"'
-    rows = page.locator("tr[data-object-type='rfp']").all()
-
     solicitation_names = []
+    
+    while True:
+        # Locate all rows with 'data-object-type="rfp"'
+        rows = page.locator("tr[data-object-type='rfp']").all()
+        
+        # Extract solicitation names from the current page
+        for row in rows:
+            # Extract the text from the solicitation name column
+            solicitation_name = row.locator("td:nth-child(3)").inner_text().strip()  # Adjust column if needed
+            if solicitation_name:
+                solicitation_names.append(solicitation_name)
+            print(solicitation_names)
 
-    # Loop through each row
-    for row in rows:
-        # Extract the text from the first cell (solicitation name column)
-        solicitation_name = row.locator("td:nth-child(3)").inner_text().strip()  # Adjust column if needed
-        if solicitation_name:
-            solicitation_names.append(solicitation_name)
-
-    # Print the extracted solicitation names
-    print("[bold cyan]Extracted Solicitation Names:[/bold cyan]", solicitation_names)
-
-    # Optionally, print individual solicitation names
-    for name in solicitation_names:
-        print(name)
-
-    browser.close()
+        page.locator("button[id='body_x_grid_PagerBtnNextPage']").click()
 
 with sync_playwright() as playwright:
     run(playwright)
