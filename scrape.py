@@ -30,22 +30,27 @@ def run(playwright: Playwright):
 
             for link in download_links:
                 file_name = link.locator("span[data-iv-role='label']").inner_text().strip()
+                print(f"Downloading: {file_name}")
 
-                # Wait for the download and save each file synchronously
-                with page.expect_download() as download_info:
-                    link.click()
-                download = download_info.value
-                download.save_as(file_name)
-                print(f"Downloaded file: {file_name}")
+                # Make sure the download link is still valid and clickable
+                if link.is_visible() and link.is_enabled():
+                    with page.expect_download() as download_info:
+                        link.click()  # Trigger the download
 
-            if page.history_back_available():
-                print("Attempting to go back to the previous page...")
-                page.go_back()
-                page.wait_for_selector("tr[data-object-type='rfp']")
-                print("Successfully navigated back to the previous page.")
-            else:
-                print("No previous page in history.")
+                    download = download_info.value
+                    download.save_as(file_name)
+                    print(f"Downloaded file: {file_name}")
+                else:
+                    print(f"Skipping invalid download link for: {file_name}")
+                
+                page.wait_for_timeout(1000)
 
+            print("Attempting to go back to the previous page...")
+            page.go_back()
+            print("Navigated back to the previous page.")
+
+            # Wait for the table rows to load again
+            page.wait_for_selector("tr[data-object-type='rfp']")
 
             # Extract the text from the solicitation name column
             solicitation_id = row.locator("td:nth-child(2)").inner_text().strip()
